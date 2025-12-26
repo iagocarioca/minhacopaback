@@ -1,0 +1,307 @@
+openapi: 3.0.0
+info:
+  title: efootbool API
+  version: "1.0.0"
+  description: API básica gerada automaticamente a partir do código-fonte. Revise e complemente os schemas conforme necessário.
+servers:
+  - url: http://localhost:5000
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserRegister:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+    Pelada:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        cidade:
+          type: string
+        fuso_horario:
+          type: string
+    Jogador:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome_completo:
+          type: string
+        apelido:
+          type: string
+        telefone:
+          type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/usuarios/registrar:
+    post:
+      summary: Registrar novo usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: Usuário criado
+        '400':
+          description: Dados inválidos
+
+  /api/usuarios/login:
+    post:
+      summary: Autenticar usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokens'
+        '401':
+          description: Credenciais inválidas
+
+  /api/usuarios/me:
+    get:
+      summary: Obter usuário atual
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dados do usuário
+
+  /api/peladas:
+    post:
+      summary: Criar pelada
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, cidade]
+              properties:
+                nome:
+                  type: string
+                cidade:
+                  type: string
+                fuso_horario:
+                  type: string
+      responses:
+        '201':
+          description: Pelada criada
+    get:
+      summary: Listar peladas
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+        - in: query
+          name: usuario_id
+          schema:
+            type: integer
+        - in: query
+          name: ativa
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de peladas
+
+  /api/peladas/{pelada_id}:
+    get:
+      summary: Obter pelada por id
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: pelada_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Pelada
+    put:
+      summary: Atualizar pelada
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: pelada_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pelada'
+      responses:
+        '200':
+          description: Atualizado
+
+  /api/peladas/{pelada_id}/jogadores:
+    post:
+      summary: Criar jogador em pelada
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: pelada_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome_completo]
+              properties:
+                nome_completo:
+                  type: string
+                apelido:
+                  type: string
+                telefone:
+                  type: string
+      responses:
+        '201':
+          description: Jogador criado
+
+  /api/peladas/rodadas/{rodada_id}/times:
+    post:
+      summary: Criar time na rodada
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: rodada_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nome, ordem]
+              properties:
+                nome:
+                  type: string
+                ordem:
+                  type: integer
+      responses:
+        '201':
+          description: Time criado
+
+  /api/peladas/partidas/{partida_id}/gols:
+    post:
+      summary: Registrar gol na partida
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: partida_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [time_id, jogador_id]
+              properties:
+                time_id:
+                  type: integer
+                jogador_id:
+                  type: integer
+                minuto:
+                  type: integer
+                gol_contra:
+                  type: boolean
+                assistencia_id:
+                  type: integer
+      responses:
+        '201':
+          description: Gol registrado
+
+  /api/peladas/votacoes/{votacao_id}/votar:
+    post:
+      summary: Registrar voto
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: votacao_id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jogador_votante_id, jogador_votado_id, pontos]
+              properties:
+                jogador_votante_id:
+                  type: integer
+                jogador_votado_id:
+                  type: integer
+                pontos:
+                  type: integer
+      responses:
+        '201':
+          description: Voto registrado
