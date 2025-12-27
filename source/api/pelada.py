@@ -193,14 +193,13 @@ def criar_pelada():
 
 
 @pelada_bp.route('/', methods=['GET'])
-@jwt_required()
 def listar_peladas():
-    """Listar peladas com filtros opcionais"""
+    """Listar peladas com filtros opcionais (público)"""
     try:
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
-        # Escopo: sempre listar apenas as peladas do usuário logado
-        usuario_id = int(get_jwt_identity())
+        # Permite filtrar por usuario_id opcionalmente via query parameter
+        usuario_id = request.args.get('usuario_id', type=int)
         ativa = request.args.get('ativa', type=lambda x: x.lower() == 'true')
 
         resultado, erro = PeladaService.listar_peladas(page, per_page, usuario_id, ativa)
@@ -233,8 +232,6 @@ def obter_pelada(pelada_id):
 
 
 @pelada_bp.route('/<int:pelada_id>/perfil', methods=['GET'])
-@jwt_required()
-@pelada_owner_required
 def obter_perfil_pelada(pelada_id):
     """Obter perfil completo da pelada com gerente, jogadores, temporadas e estatísticas"""
     try:
@@ -1107,8 +1104,6 @@ def criar_votacao(rodada_id):
 
 
 @pelada_bp.route('/votacoes/<int:votacao_id>/votar', methods=['POST'])
-@jwt_required()
-@votacao_owner_required
 def registrar_voto(votacao_id):
     """Registrar um voto"""
     try:
@@ -1138,8 +1133,6 @@ def registrar_voto(votacao_id):
 
 
 @pelada_bp.route('/votacoes/<int:votacao_id>/resultado', methods=['GET'])
-@jwt_required()
-@votacao_owner_required
 def obter_resultado_votacao(votacao_id):
     """Obter resultado agregado de uma votação"""
     try:
