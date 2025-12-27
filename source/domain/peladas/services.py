@@ -622,6 +622,30 @@ class TimeService:
             return None, 'ID de time inválido'
 
     @staticmethod
+    def atualizar_time(time_id, dados):
+        """Atualizar um time"""
+        try:
+            time = Time.query.get(int(time_id))
+            if not time:
+                return None, 'Time não encontrado'
+
+            if 'nome' in dados:
+                time.nome = dados['nome']
+            if 'cor' in dados:
+                time.cor = dados['cor']
+            if 'escudo_url' in dados:
+                time.escudo_url = dados['escudo_url']
+
+            db.session.commit()
+            return TimeService._serializar_time_completo(time), None
+        except (ValueError, TypeError):
+            db.session.rollback()
+            return None, 'ID de time inválido'
+        except Exception as e:
+            db.session.rollback()
+            return None, str(e)
+
+    @staticmethod
     def listar_times_da_temporada(temporada_id, page=1, per_page=20):
         """Listar todos os times de uma temporada"""
         try:

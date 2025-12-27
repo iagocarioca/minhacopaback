@@ -759,6 +759,61 @@ def obter_time(time_id):
         return jsonify({'erro': str(e)}), 500
 
 
+@pelada_bp.route('/times/<int:time_id>', methods=['PUT'])
+@jwt_required()
+@time_owner_required
+def atualizar_time(time_id):
+    """
+    Atualizar um time
+    
+    Aceita multipart/form-data ou JSON:
+    - nome, cor (campos opcionais)
+    - escudo (opcional, arquivo de imagem) - apenas multipart
+    """
+    try:
+        escudo_url = None
+        
+        # Verificar se é multipart/form-data (upload de arquivo) ou JSON
+        content_type = request.content_type or ''
+        is_multipart = 'multipart/form-data' in content_type
+        
+        if is_multipart:
+            dados = {}
+            if request.form.get('nome'):
+                dados['nome'] = request.form.get('nome')
+            if request.form.get('cor'):
+                dados['cor'] = request.form.get('cor')
+            
+            # Processar upload de escudo
+            if 'escudo' in request.files:
+                arquivo_escudo = request.files['escudo']
+                if arquivo_escudo and arquivo_escudo.filename:
+                    escudo_url = salvar_imagem_time(arquivo_escudo)
+                    if escudo_url:
+                        dados['escudo_url'] = escudo_url
+        else:
+            dados = request.get_json(silent=True)
+            if not dados:
+                return jsonify({'erro': 'Nenhum dado fornecido'}), 400
+
+        if not dados:
+            return jsonify({'erro': 'Nenhum dado fornecido'}), 400
+
+        time, erro = TimeService.atualizar_time(time_id, dados)
+
+        if erro:
+            codigo_status = 404 if 'não encontrado' in erro else 400
+            return jsonify({'erro': erro}), codigo_status
+
+        return jsonify({
+            'mensagem': 'Time atualizado com sucesso',
+            'time': time
+        }), 200
+
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
 @pelada_bp.route('/times/<int:time_id>/jogadores', methods=['POST'])
 @jwt_required()
 @time_owner_required

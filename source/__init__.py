@@ -8,16 +8,35 @@ def create_app(config_class=Config):
     app.config.from_object(config_class)
 
     # Configurar CORS
-    CORS(app, resources={
-        r"/api/*": {
-            "origins": ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3004"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "expose_headers": ["Content-Type", "Authorization"],
-            "supports_credentials": True,
-            "max_age": 3600
-        }
-    }) 
+    # Em desenvolvimento: aceita todas as origens (inclui rede local)
+    # Em produção, ajuste para aceitar apenas domínios específicos
+    import os
+    is_development = os.environ.get('FLASK_ENV') != 'production'
+    
+    if is_development:
+        # Desenvolvimento: aceita qualquer origem (inclui IPs da rede local)
+        CORS(app, resources={
+            r"/api/*": {
+                "origins": "*",  # Aceita qualquer origem em desenvolvimento
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "expose_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+                "max_age": 3600
+            }
+        })
+    else:
+        # Produção: apenas origens específicas
+        CORS(app, resources={
+            r"/api/*": {
+                "origins": ["http://localhost:3000", "http://localhost:3001"],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "expose_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+                "max_age": 3600
+            }
+        }) 
 
     # Inicialização das extensões
     db.init_app(app)

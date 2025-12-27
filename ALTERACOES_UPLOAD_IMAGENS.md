@@ -170,6 +170,31 @@ escudo: [arquivo de imagem] (opcional)
 }
 ```
 
+#### `PUT /api/peladas/times/<time_id>`
+**NOVO:** Aceita `multipart/form-data` com campo `escudo` para atualizar time
+
+**Formato (FormData):**
+```
+nome: "Time Azul" (opcional)
+cor: "azul" (opcional)
+escudo: [arquivo de imagem] (opcional)
+```
+
+**Resposta:**
+```json
+{
+  "mensagem": "Time atualizado com sucesso",
+  "time": {
+    "id": 10,
+    "nome": "Time Azul",
+    "cor": "azul",
+    "escudo_url": "/static/uploads/times/escudo_20251225_121609_789012.jpg",
+    "jogadores": [...],
+    ...
+  }
+}
+```
+
 #### `GET /api/peladas/times/<time_id>`
 **ATUALIZADO:** Agora retorna `escudo_url` no time E `foto_url` em cada jogador
 
