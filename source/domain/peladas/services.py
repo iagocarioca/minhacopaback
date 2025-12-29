@@ -1271,6 +1271,31 @@ class VotacaoService:
             return None, str(e)
 
     @staticmethod
+    def listar_votacoes_rodada(rodada_id, tipo=None):
+        """Lista todas as votações da rodada (sem resultados agregados)"""
+        try:
+            rodada = Rodada.query.get(int(rodada_id))
+            if not rodada:
+                return None, 'Rodada não encontrada'
+
+            query = Votacao.query.filter_by(rodada_id=rodada_id)
+            if tipo:
+                query = query.filter_by(tipo=tipo)
+
+            votacoes = query.order_by(Votacao.id.desc()).all()
+            saida = [VotacaoService._serializar_votacao(v) for v in votacoes]
+
+            return {
+                'rodada_id': rodada.id,
+                'tipo': tipo,
+                'votacoes': saida
+            }, None
+        except (ValueError, TypeError):
+            return None, 'ID de rodada inválido'
+        except Exception as e:
+            return None, str(e)
+
+    @staticmethod
     def resultados_votacoes_da_rodada(rodada_id, tipo=None):
         """Lista todas as votações da rodada e anexa o resultado agregado de cada uma."""
         try:
@@ -1297,6 +1322,40 @@ class VotacaoService:
         except (ValueError, TypeError):
             return None, 'ID de rodada inválido'
         except Exception as e:
+            return None, str(e)
+
+    @staticmethod
+    def obter_votacao(votacao_id):
+        """Obtém uma votação por ID"""
+        try:
+            votacao = Votacao.query.get(int(votacao_id))
+            if not votacao:
+                return None, 'Votação não encontrada'
+
+            return VotacaoService._serializar_votacao(votacao), None
+        except (ValueError, TypeError):
+            return None, 'ID de votação inválido'
+        except Exception as e:
+            return None, str(e)
+
+    @staticmethod
+    def encerrar_votacao(votacao_id):
+        """Encerra uma votação atualizando o status para 'encerrada' e fecha_em para agora"""
+        try:
+            votacao = Votacao.query.get(int(votacao_id))
+            if not votacao:
+                return None, 'Votação não encontrada'
+
+            agora = VotacaoService._agora_br_naive()
+            votacao.status = 'encerrada'
+            votacao.fecha_em = agora
+
+            db.session.commit()
+            return VotacaoService._serializar_votacao(votacao), None
+        except (ValueError, TypeError):
+            return None, 'ID de votação inválido'
+        except Exception as e:
+            db.session.rollback()
             return None, str(e)
 
     @staticmethod

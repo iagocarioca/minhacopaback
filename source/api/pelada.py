@@ -639,8 +639,6 @@ def obter_rodada(rodada_id):
 # ==================== ROTAS DE JOGADORES DA RODADA ====================
 
 @pelada_bp.route('/rodadas/<int:rodada_id>/jogadores', methods=['GET'])
-@jwt_required()
-@rodada_owner_required
 def listar_jogadores_rodada(rodada_id):
     """Listar jogadores que participaram da rodada (via times das partidas)"""
     try:
@@ -1018,8 +1016,6 @@ def remover_gol(gol_id):
 # ==================== ROTAS DE RANKINGS ====================
 
 @pelada_bp.route('/temporadas/<int:temporada_id>/ranking/times', methods=['GET'])
-@jwt_required()
-@temporada_owner_required
 def ranking_times(temporada_id):
     """Ranking de times por pontos na temporada"""
     try:
@@ -1035,8 +1031,6 @@ def ranking_times(temporada_id):
 
 
 @pelada_bp.route('/temporadas/<int:temporada_id>/ranking/artilheiros', methods=['GET'])
-@jwt_required()
-@temporada_owner_required
 def ranking_artilheiros(temporada_id):
     """Ranking de artilheiros na temporada"""
     try:
@@ -1053,8 +1047,6 @@ def ranking_artilheiros(temporada_id):
 
 
 @pelada_bp.route('/temporadas/<int:temporada_id>/ranking/assistencias', methods=['GET'])
-@jwt_required()
-@temporada_owner_required
 def ranking_assistencias(temporada_id):
     """Ranking de assistências na temporada"""
     try:
@@ -1071,6 +1063,22 @@ def ranking_assistencias(temporada_id):
 
 
 # ==================== ROTAS DE VOTAÇÕES ====================
+
+@pelada_bp.route('/rodadas/<int:rodada_id>/votacoes', methods=['GET'])
+def listar_votacoes_rodada(rodada_id):
+    """Listar votações de uma rodada"""
+    try:
+        tipo = request.args.get('tipo')
+        resultado, erro = VotacaoService.listar_votacoes_rodada(rodada_id, tipo=tipo)
+
+        if erro:
+            codigo_status = 404 if 'não encontrada' in erro else 400
+            return jsonify({'erro': erro}), codigo_status
+
+        return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
 
 @pelada_bp.route('/rodadas/<int:rodada_id>/votacoes', methods=['POST'])
 @jwt_required()
@@ -1098,6 +1106,22 @@ def criar_votacao(rodada_id):
             'mensagem': 'Votação criada com sucesso',
             'votacao': votacao
         }), 201
+
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@pelada_bp.route('/votacoes/<int:votacao_id>', methods=['GET'])
+def obter_votacao(votacao_id):
+    """Obter uma votação por ID"""
+    try:
+        votacao, erro = VotacaoService.obter_votacao(votacao_id)
+
+        if erro:
+            codigo_status = 404 if 'não encontrada' in erro else 400
+            return jsonify({'erro': erro}), codigo_status
+
+        return jsonify(votacao), 200
 
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
@@ -1154,8 +1178,6 @@ def obter_resultado_votacao(votacao_id):
 
 
 @pelada_bp.route('/rodadas/<int:rodada_id>/votacoes/resultados', methods=['GET'])
-@jwt_required()
-@rodada_owner_required
 def obter_resultados_votacoes_rodada(rodada_id):
     """Obter resultados agregados de todas as votações de uma rodada"""
     try:
@@ -1167,5 +1189,26 @@ def obter_resultados_votacoes_rodada(rodada_id):
             return jsonify({'erro': erro}), codigo_status
 
         return jsonify(resultado), 200
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@pelada_bp.route('/votacoes/<int:votacao_id>/encerrar', methods=['POST'])
+@jwt_required()
+@votacao_owner_required
+def encerrar_votacao(votacao_id):
+    """Encerrar uma votação"""
+    try:
+        votacao, erro = VotacaoService.encerrar_votacao(votacao_id)
+
+        if erro:
+            codigo_status = 404 if 'não encontrada' in erro else 400
+            return jsonify({'erro': erro}), codigo_status
+
+        return jsonify({
+            'mensagem': 'Votação encerrada com sucesso',
+            'votacao': votacao
+        }), 200
+
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
